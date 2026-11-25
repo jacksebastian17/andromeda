@@ -128,6 +128,35 @@ def test_missing_and_unresolved_have_different_denominators(data: Dataset) -> No
     assert next(o for o in data.observations if o.event_id == "B-RELAY").issued_at is None
 
 
+def test_forecast_identity_rejects_same_cutoff_generated_later(data: Dataset) -> None:
+    relay = next(f for f in data.forecasts if f.contract_id == "B-RELAY-YES")
+    duplicate = replace(
+        relay, id="duplicate", generated_at=relay.generated_at + timedelta(seconds=1)
+    )
+
+    with pytest.raises(ValueError, match="Duplicate forecast vintage"):
+        replace(data, forecasts=(*data.forecasts, duplicate)).validate()
+
+
+def test_forecast_identity_accepts_distinct_cutoffs_generated_together(data: Dataset) -> None:
+    relay = next(f for f in data.forecasts if f.contract_id == "B-RELAY-YES")
+    later_cutoff = replace(
+        relay, id="later-cutoff", cutoff_at=relay.cutoff_at + timedelta(seconds=1)
+    )
+
+    replace(data, forecasts=(*data.forecasts, later_cutoff)).validate()
+
+
+def test_partition_vintage_uses_shared_cutoff(data: Dataset) -> None:
+    first, *rest = data.forecasts
+    generated_later = replace(first, generated_at=first.generated_at + timedelta(seconds=1))
+    replace(data, forecasts=(generated_later, *rest)).validate()
+
+    different_cutoff = replace(first, cutoff_at=first.cutoff_at + timedelta(seconds=1))
+    with pytest.raises(ValueError, match="Partition forecast vintage is incomplete"):
+        replace(data, forecasts=(different_cutoff, *rest)).validate()
+
+
 @pytest.mark.parametrize("mode", ["unknown", "late-source", "late-receipt"])
 def test_forecast_uses_only_known_inputs_at_cutoff(data: Dataset, mode: str) -> None:
     obs = data.observations[0]

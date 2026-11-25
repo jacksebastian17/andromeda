@@ -266,7 +266,7 @@ class Dataset:
         unique(((m.id, m.version) for m in self.models), "model version")
         unique((r.contract_id for r in self.resolutions), "settled contract")
         unique(
-            ((f.model_id, f.model_version, f.contract_id, f.generated_at) for f in self.forecasts),
+            ((f.contract_id, f.model_id, f.model_version, f.cutoff_at) for f in self.forecasts),
             "forecast vintage",
         )
         unique(((e.forecast_id, e.resolution_id, e.metric) for e in self.evaluations), "score")
@@ -307,7 +307,7 @@ class Dataset:
                 raise ValueError("Observation count keys must match its event contracts")
             if obs.event_id in partitions and sum(count_map.values()) != obs.total:
                 raise ValueError("Partition counts must cover the full ensemble")
-        vintages: dict[tuple[str, str, str, datetime, datetime], list[Forecast]] = defaultdict(list)
+        vintages: dict[tuple[str, str, str, datetime], list[Forecast]] = defaultdict(list)
         try:
             for f in self.forecasts:
                 f.validate_inputs(
@@ -316,9 +316,7 @@ class Dataset:
                     models[f.model_id, f.model_version],
                     [observations[key] for key in f.observation_ids],
                 )
-                vintages[
-                    f.event_id, f.model_id, f.model_version, f.cutoff_at, f.generated_at
-                ].append(f)
+                vintages[f.event_id, f.model_id, f.model_version, f.cutoff_at].append(f)
             for (event_id, *_), vintage in vintages.items():
                 group = groups[event_id]
                 if event_id in partitions:

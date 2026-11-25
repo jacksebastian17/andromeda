@@ -2,6 +2,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
@@ -9,7 +10,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from andromeda.api import create_app
-from andromeda.database import HEAD, cash_cents, make_engine, migrate, write_transaction
+from andromeda.database import HEAD, cash_cents, make_engine, migrate, stamp, write_transaction
 from andromeda.fixtures import build_fixture
 from andromeda.storage import evaluate_persisted, ingest
 
@@ -170,6 +171,64 @@ def test_replay_is_atomic_and_provenance_is_immutable(db: Path) -> None:
     ingest(engine, 0)
     with client(db) as web:
         assert web.get(PREFIX + "/health").json()["source_status"] == "incomplete"
+
+
+@pytest.mark.parametrize(
+    ("new_id", "error", "message"),
+    [
+        (None, ValueError, "Conflicting immutable forecasts record"),
+        ("duplicate", IntegrityError, "UNIQUE constraint failed: forecasts.contract_id"),
+    ],
+)
+def test_persisted_cutoff_rejects_conflicting_replay(
+    db: Path, new_id: str | None, error: type[Exception], message: str
+) -> None:
+    engine = make_engine(db)
+    fixture = build_fixture()
+    relay = next(f for f in fixture.forecasts if f.contract_id == "B-RELAY-YES")
+    conflicting = replace(
+        relay, id=new_id or relay.id, generated_at=relay.generated_at + timedelta(seconds=1)
+    )
+    proposed = replace(
+        fixture,
+        forecasts=tuple(conflicting if f.id == relay.id else f for f in fixture.forecasts),
+        evaluations=(),
+    )
+    proposed.validate()
+    ingest(engine, 100_000)
+    evaluate_persisted(engine)
+
+    with pytest.raises(error, match=message):
+        ingest(engine, 100_000, lambda: proposed)
+
+    with engine.connect() as conn:
+        assert conn.exec_driver_sql(
+            "SELECT id, cutoff_at, generated_at FROM forecasts WHERE contract_id=?",
+            (relay.contract_id,),
+        ).all() == [(relay.id, stamp(relay.cutoff_at), stamp(relay.generated_at))]
+        assert conn.exec_driver_sql("SELECT COUNT(*) FROM evaluations").scalar_one() == 7
+        assert conn.exec_driver_sql("SELECT COUNT(*) FROM forecast_sources").scalar_one() == 10
+
+
+def test_persist_distinct_cutoffs_with_same_generation_time(db: Path) -> None:
+    engine = make_engine(db)
+    fixture = build_fixture()
+    relay = next(f for f in fixture.forecasts if f.contract_id == "B-RELAY-YES")
+    later = replace(relay, id="later-cutoff", cutoff_at=relay.cutoff_at + timedelta(seconds=1))
+    proposed = replace(fixture, forecasts=(*fixture.forecasts, later))
+    ingest(engine, 100_000)
+
+    for _ in range(2):
+        ingest(engine, 100_000, lambda: proposed)
+
+    with engine.connect() as conn:
+        assert conn.exec_driver_sql(
+            "SELECT id, cutoff_at, generated_at FROM forecasts WHERE contract_id=? ORDER BY cutoff_at",
+            (relay.contract_id,),
+        ).all() == [
+            (relay.id, stamp(relay.cutoff_at), stamp(relay.generated_at)),
+            (later.id, stamp(later.cutoff_at), stamp(relay.generated_at)),
+        ]
 
 
 def test_concurrent_replay_and_foreign_keys(db: Path) -> None:

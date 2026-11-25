@@ -96,6 +96,8 @@ npm.cmd run e2e
 
 The browser suite exercises all five pages against the actual API, opens a contract inspection, interrupts and restores connectivity, and tests a narrow viewport. Each run writes six PNGs under `frontend\test-results\screenshots\`. The tests expect the bundled fixture definitions and allow a custom opening balance. Dependency installation and browser downloads require network access. The initialized terminal operates locally.
 
+GitHub Actions pins `ubuntu-24.04` because Playwright 1.56.1 supports Chromium and its system dependencies on that runner. The A1 run selected Ubuntu 26.04 through `ubuntu-latest` and failed at browser installation. CI runs the Chromium suite and uploads `frontend/test-results/` as the `browser-verification` artifact.
+
 ## Research scope
 
 A1 has one experimental ensemble-frequency model. The backend has no exchange client, credential flow, order submission, fills, sizing or market-data collector. Persistent exchange data collection requires a future authorization decision. Calibration, structural valuation, cross-market comparisons, domain-specific ML and prospective economic evaluation remain future work. The archived Kalshi Edge Engine supplied no code or datasets to this implementation.
