@@ -1,0 +1,56 @@
+name: Verify A1
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Verify backend
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip check
+          python -m pytest -q
+          python -m ruff check .
+          python -m mypy
+      - name: Verify terminal
+        working-directory: frontend
+        run: |
+          npm ci
+          npm test
+          npm run lint
+          npm run typecheck
+          npm run build
+          npx playwright install --with-deps chromium
+      - name: Exercise the local research workflow in Chromium
+        run: |
+          python -m andromeda migrate
+          python -m andromeda ingest
+          python -m andromeda evaluate
+          python -m andromeda serve > "$RUNNER_TEMP/andromeda-api.log" 2>&1 &
+          api_pid=$!
+          npm --prefix frontend run dev > "$RUNNER_TEMP/andromeda-vite.log" 2>&1 &
+          ui_pid=$!
+          trap 'kill "$api_pid" "$ui_pid" 2>/dev/null || true' EXIT
+          curl --fail --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:8000/api/v1/health
+          curl --fail --retry 20 --retry-connrefused --retry-delay 1 http://localhost:5173/
+          npm --prefix frontend run e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-verification
+          path: frontend/test-results/
+          if-no-files-found: ignore
