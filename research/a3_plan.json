@@ -1,0 +1,27 @@
+{
+  "campaign": "andromeda-a3.0-20261126",
+  "schema": 1,
+  "origin": "https://api.elections.kalshi.com/trade-api/v2",
+  "authorization": "Operator-confirmed bounded personal research. Correspondence not independently inspected. Local raw storage only.",
+  "cohorts": {
+    "college": {"series": "KXNCAAMBGAME", "start": "2026-03-01", "end": "2026-04-01", "groups": 12, "contracts_per_group": 2},
+    "nba": {"series": "KXNBAGAME", "start": "2026-05-01", "end": "2026-06-01", "groups": 12, "contracts_per_group": 2},
+    "weather": {"series": "KXHIGHNY", "start": "2026-09-01", "end": "2026-10-01", "groups": 10, "contracts_per_group": 6}
+  },
+  "discovery": "One cutoff, three series descriptions and first 100 archived market rows per series. Inspect only presence, counts and calendar months.",
+  "enumeration": "At most three archival pages of 100 per series, including discovery, plus up to three live pages with close bounds padded 14 days. Retain all statuses. Window by encoded event date, end exclusive. This is a bounded frame.",
+  "sampling": "Sort event IDs by event date then full ID. Select evenly spaced integer indices across the frame including endpoints. Sort sibling tickers, take first up to per-group cap. Quarantine identity conflicts. No replacement.",
+  "requests": 500,
+  "bytes": 52428800,
+  "response_bytes": 2097152,
+  "max_target_events": 34,
+  "max_target_contracts": 108,
+  "serial_interval_seconds": 1.1,
+  "horizon_minutes_after_open": 60,
+  "lookback_minutes": 60,
+  "assumed_bar_publication_delay_seconds": 60,
+  "primary": "Latest positive-volume completed one-minute YES trade close with end plus 60s no later than open+60min. No substitution.",
+  "trade_check": "First contract of each selected event. Inspect the same 60-minute price window, page size 100, maximum two pages per tier. Unclassified or negotiated trades do not establish agreement.",
+  "timing": "Original schedules, suspensions and actual publication times require contemporaneous provenance. Otherwise retrospective proxies only. Conservative pre-event screen requires cutoff before midnight in event-local time, or a validated occurrence boundary.",
+  "partitions": "Per cohort chronological complete event-day blocks, approximately 60/20/20. No pooled prospective interpretation across disjoint windows. No scoring or model fitting."
+}
