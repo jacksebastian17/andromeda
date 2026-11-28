@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
+from sqlite3 import Error as SQLiteError
 from time import monotonic
 from typing import Annotated
 
@@ -13,6 +14,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import Connection
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+
+from research.observer import store as observer
 
 from . import __version__, queries
 from . import schemas as s
@@ -24,7 +27,7 @@ DB_WARNING = (
 )
 
 
-def create_app(path: Path | None = None) -> FastAPI:
+def create_app(path: Path | None = None, observer_root: Path = observer.ROOT) -> FastAPI:
     engine = make_engine(path or database_path(), mode="ro")
 
     @asynccontextmanager
@@ -59,6 +62,16 @@ def create_app(path: Path | None = None) -> FastAPI:
 
     db = Depends(snapshot)
     prefix = "/api/v1"
+
+    @app.get(prefix + "/observer")
+    def observer_health() -> list[observer.Health]:
+        try:
+            return [
+                observer.health(observer_root, "smoke"),
+                observer.health(observer_root, "pilot"),
+            ]
+        except (SQLiteError, OSError):
+            raise HTTPException(503, "Observer storage unavailable.") from None
 
     @app.exception_handler(SQLAlchemyError)
     async def db_error(_: Request, exc: SQLAlchemyError) -> JSONResponse:

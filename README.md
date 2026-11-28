@@ -2,6 +2,12 @@
 
 Andromeda is a local quantitative research terminal. A1 replays a fictional source ledger, generates versioned binary forecasts, evaluates known outcomes and serves the results from SQLite. The paper portfolio begins with $1,000 and has zero financial transactions. The fixture establishes a reproducible engineering baseline. Economic performance remains untested.
 
+## Project mandate
+
+Andromeda's objective is to discover, validate and eventually exploit a sustainable economic advantage in prediction markets. Consistent supplemental income of even $5–10 per week would interest the operator if credible evidence supports it. Profitability remains unproven. Engineering earns its place by enabling an economic test. Account for costs and uncertainty, reject unsupported hypotheses promptly and avoid further investment based on sunk costs.
+
+The [NBA observer runbook](docs/research/a3-1-observer.md) covers independent local collection and System Health. The [economic research priorities](docs/research/economic-priorities.md) identify the next bounded experiment.
+
 ## Install on Windows
 
 Use a local Python 3.12 or 3.13 interpreter, Node 24 and npm. This checkout was exercised with Windows Store Python 3.13.14, Node 24.14.0 and npm 11.9.0. In PowerShell, run these commands from the repository. Calling the environment's executable directly works without activating a PowerShell script.
@@ -100,4 +106,4 @@ GitHub Actions pins `ubuntu-24.04` because Playwright 1.56.1 supports Chromium a
 
 ## Research scope
 
-A1 has one experimental ensemble-frequency model. The backend has no exchange client, credential flow, order submission, fills, sizing or market-data collector. Persistent exchange data collection requires a future authorization decision. Calibration, structural valuation, cross-market comparisons, domain-specific ML and prospective economic evaluation remain future work. The archived Kalshi Edge Engine supplied no code or datasets to this implementation.
+A1 has one experimental ensemble-frequency model. A3.0 acquired historical Kalshi records for bounded personal research. A3.1 adds a standalone, anonymous NBA observer with an explicitly launched seven-day pilot. The local API serves aggregate observer health. The research remains paper-only.

@@ -197,9 +197,29 @@ describe('research terminal', () => {
       last_ingestion_at: null,
       last_evaluation_at: null,
     }
-    serve({ '/api/v1/health': Response.json(diagnostics, { status: 503 }) })
+    serve({ '/api/v1/health': Response.json(diagnostics, { status: 503 }), '/api/v1/observer': [] })
     mount('/health')
     expect(await screen.findByText('Database integrity check failed')).toBeVisible()
     expect(screen.getByText('Version')).toBeVisible()
+  })
+
+  it('refreshes genuine observer status independently of the synthetic source', async () => {
+    const campaign = {
+      mode: 'pilot', state: 'running', reason: '', deadline: '2030-01-13T12:00:00Z',
+      last_observation: null, observations: 0, groups: 0, resolved: 0, attempts: 1,
+      max_requests: 3500, charged_bytes: 100, max_bytes: 512 * 1048576, storage_bytes: 1024,
+      gap_slots: 0, errors: 0, last_error: null,
+    }
+    const responses = { '/api/v1/health': health, '/api/v1/observer': [campaign] }
+    serve(responses)
+    const client = mount('/health')
+    const panel = within(await screen.findByRole('region', { name: 'Genuine NBA market observer' }))
+    expect(await panel.findByText('running')).toBeVisible()
+    for (const state of ['stale', 'stopped']) {
+      campaign.state = state
+      await act(async () => { await client.refetchQueries({ queryKey: ['api', '/observer'] }) })
+      expect(await panel.findByText(state)).toBeVisible()
+    }
+    expect(screen.getByText('Synthetic source')).toBeVisible()
   })
 })

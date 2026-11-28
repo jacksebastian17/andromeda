@@ -1,7 +1,44 @@
 import { Activity, CircleCheck, Clock3, Database, Radio } from 'lucide-react'
-import type { Health } from './data'
-import { counted, display, stamp, uptime } from './data'
-import { Badge, Details, Empty, Metric, Panel, Warning } from './ui'
+import type { Health, ObserverHealth } from './data'
+import { counted, display, stamp, uptime, useResource } from './data'
+import { Badge, Boundary, Details, Empty, Metric, Panel, Warning } from './ui'
+
+function ObserverPanel() {
+  const observer = useResource<ObserverHealth[]>('/observer')
+  return (
+    <Panel title="Genuine NBA market observer" className="observer-panel">
+      <Boundary query={observer}>
+        {(campaigns) => {
+          const started = campaigns.filter((c) => c.deadline !== null)
+          if (!started.length) return <p>Stopped · No local campaign has started.</p>
+          return started.map((c) => (
+            <div key={c.mode}>
+              <h3>
+                {c.mode === 'pilot' ? 'Seven-day pilot' : 'Smoke campaign'}
+                <Badge tone={{ running: 'green', stale: 'amber', stopped: 'neutral' }[c.state]}>
+                  {c.state}
+                </Badge>
+              </h3>
+              <Details rows={[
+                ['Last observation', stamp(c.last_observation)],
+                ['Observations', c.observations.toLocaleString()],
+                ['Underlying games', c.groups],
+                ['Resolved games', c.resolved],
+                ['GET attempts', c.attempts + ' / ' + c.max_requests],
+                ['Response budget', (c.charged_bytes / 1048576).toFixed(2) + ' / ' + c.max_bytes / 1048576 + ' MiB'],
+                ['Coverage gaps', counted(c.gap_slots, 'poll')],
+                ['Local storage', (c.storage_bytes / 1048576).toFixed(2) + ' MiB'],
+                ['Deadline', stamp(c.deadline)],
+                ['Errors', c.errors + (c.last_error ? ' · ' + c.last_error : '')],
+                ['Stop reason', c.reason || '—'],
+              ]} />
+            </div>
+          ))
+        }}
+      </Boundary>
+    </Panel>
+  )
+}
 
 export default function HealthPage({ data }: { data: Health }) {
   return (
@@ -66,6 +103,7 @@ export default function HealthPage({ data }: { data: Health }) {
           />
         </Panel>
       </div>
+      <ObserverPanel />
       <Panel
         title="System warnings"
         action={

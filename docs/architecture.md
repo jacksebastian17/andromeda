@@ -39,6 +39,7 @@ Every research endpoint uses HTTP GET under `/api/v1`. Responses are JSON and ti
 | Path | Successful response |
 | --- | --- |
 | `/health` | Actual process version, mode, startup time, monotonic uptime, database status, source state, latest successful jobs and warnings. Missing inputs count distinct event/source pairs. |
+| `/observer` | Aggregate smoke and pilot status from separate, read-only local campaign databases. System Health displays genuine NBA observations separately from the synthetic ledger. The browser can inspect a worker without starting or stopping it. |
 | `/overview` | Counts, equally weighted mean binary Brier score, optional paper portfolio and most recent attempt per job type. |
 | `/events` | Events with contracts, latest forecast per contract, optional resolution and input issue. |
 | `/events/{event_id}` | Event and all its contracts, plus observation payloads, timestamps and provenance. |

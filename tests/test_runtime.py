@@ -268,6 +268,7 @@ def test_execution_surface_and_cors(db: Path) -> None:
             PREFIX + p
             for p in (
                 "/health",
+                "/observer",
                 "/overview",
                 "/events",
                 "/events/{event_id}",

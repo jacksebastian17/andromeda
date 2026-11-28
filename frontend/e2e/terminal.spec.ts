@@ -117,6 +117,18 @@ test('five pages present the persisted research fixture', async ({ page, request
   await capture(page, 'paper-portfolio')
 
   await navigate(page, 'System Health', '/health')
+  const observerPanel = page.getByRole('region', { name: 'Genuine NBA market observer' })
+  await expect(observerPanel).toBeVisible()
+  const observerResponse = await request.get(`${api}/observer`)
+  expect(observerResponse.ok()).toBeTruthy()
+  const campaigns: { deadline: string | null; state: string }[] = await observerResponse.json()
+  const started = campaigns.filter((campaign) => campaign.deadline !== null)
+  if (started.length === 0) {
+    await expect(observerPanel).toContainText('No local campaign has started')
+  } else {
+    for (const campaign of started) await expect(observerPanel).toContainText(campaign.state)
+    await expect(observerPanel).toContainText('GET attempts')
+  }
   const healthResponse = await request.get(`${api}/health`)
   expect(healthResponse.ok()).toBeTruthy()
   const health = await healthResponse.json()

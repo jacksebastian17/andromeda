@@ -1,5 +1,24 @@
 import { useQuery } from '@tanstack/react-query'
 
+export interface ObserverHealth {
+  mode: 'smoke' | 'pilot'
+  state: 'running' | 'stopped' | 'stale'
+  reason: string
+  deadline: string | null
+  last_observation: string | null
+  observations: number
+  groups: number
+  resolved: number
+  attempts: number
+  max_requests: number
+  charged_bytes: number
+  max_bytes: number
+  storage_bytes: number
+  gap_slots: number
+  errors: number
+  last_error: string | null
+}
+
 export interface Health {
   version: string
   mode: string

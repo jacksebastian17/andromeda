@@ -1,0 +1,1 @@
+"""Standalone personal research tools."""
