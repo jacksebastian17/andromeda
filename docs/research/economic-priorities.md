@@ -18,4 +18,6 @@ Use those six preidentified development pairs as a fixed whitelist. From their a
 
 E1 found two one-cent close discrepancies in 136 matched quote minutes. Both disappeared when using the within-minute ranges and under each positive fee scenario. The single prospective follow-up found zero gross discrepancies in 236 eligible pairs across six games. E1 is parked. [Historical results](e1-complementary-contracts.md) · [Prospective closeout](e2-independent-weather.md)
 
-E2 found archived probabilistic temperature guidance at the correct NYC station. The NBM maximum omits seven hours of the settlement day and includes one hour of the next day. The smallest follow-up is a station-only test of how often that difference changes bracket assignment. [E2 feasibility and experiment](e2-independent-weather.md)
+E2 found archived probabilistic temperature guidance at the correct NYC station. The NBM maximum omits seven hours of the settlement day and includes one hour of the next day. The proposed Central Park station window study is deferred. [E2 feasibility and experiment](e2-independent-weather.md)
+
+E3’s development-fitted recalibration worsened Brier loss on both validation and test. The 44-game test could not resolve the prespecified 0.005 improvement. Pause expansion and let the existing bounded observer finish. [E3 statistical calibration and decision](e3-calibration.md)
